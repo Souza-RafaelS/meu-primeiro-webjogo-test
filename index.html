@@ -48,12 +48,10 @@
         <div></div> <div class="btn-touch" id="btn-baixo">▼</div> <div></div>
     </div>
 
-    <!-- Scripts na ordem correta -->
     <script src="mapa.js"></script>
     <script src="teclado.js"></script>
     <script src="motor.js"></script>
 
-    <!-- Ativa o Service Worker básico para PWA -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');

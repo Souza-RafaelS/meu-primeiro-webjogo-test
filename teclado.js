@@ -1,34 +1,48 @@
 let teclas = {};
+let cliqueDoMouse = null;
 
 // Comandos do PC
 window.addEventListener("keydown", (e) => teclas[e.key] = true);
 window.addEventListener("keyup", (e) => teclas[e.key] = false);
 
-// Função para ativar os comandos de toque do celular
+// Captura cliques no PC e Toques no Celular para os menus
+window.addEventListener("mousedown", (e) => capturarClique(e));
+window.addEventListener("touchstart", (e) => {
+    if (e.touches.length > 0) capturarClique(e.touches[0]);
+});
+
+function capturarClique(evento) {
+    const canvas = document.getElementById("rpg");
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    cliqueDoMouse = {
+        x: (evento.clientX - rect.left) * (canvas.width / rect.width),
+        y: (evento.clientY - rect.top) * (canvas.height / rect.height)
+    };
+}
+
+// Função para ativar os comandos de toque direcionais do celular
 function configurarTouch(idBotao, chaveTeclada) {
     const botao = document.getElementById(idBotao);
     if (!botao) return;
 
-    // Quando o dedo encosta
     botao.addEventListener("touchstart", (e) => {
         e.preventDefault(); 
         teclas[chaveTeclada] = true;
     });
     
-    // Quando o dedo sai de cima do botão
     botao.addEventListener("touchend", (e) => {
         e.preventDefault();
         teclas[chaveTeclada] = false;
     });
 
-    // Garante que se o dedo sair arrastando para fora do botão, ele pare de andar
     botao.addEventListener("touchcancel", (e) => {
         e.preventDefault();
         teclas[chaveTeclada] = false;
     });
 }
 
-// Vincula os botões da tela com a lógica de movimento após o HTML carregar
+// Vincula os botões da tela após o HTML carregar por completo
 window.addEventListener("DOMContentLoaded", () => {
     configurarTouch("btn-cima", "ArrowUp");
     configurarTouch("btn-baixo", "ArrowDown");
