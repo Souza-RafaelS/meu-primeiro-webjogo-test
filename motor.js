@@ -13,7 +13,7 @@ imgHeroi.onload = function() {
 };
 
 // --- PROPRIEDADES DO JOGO ---
-let heroi = { x: 0, y: 0, larguraTela: 32, alturaTela: 20, larguraDesenho: 48, alturaDesenho: 64, velocidade: 3, frameX: 0, frameY: 0, contadorFrames: 0, andando: false };
+let heroi = { x: 0, y: 0, larguraTela: 32, alturaTela: 20, larguraDesenho: 16, alturaDesenho: 20, velocidade: 3, frameX: 0, frameY: 0, contadorFrames: 0, andando: false };
 const TAMANHO_BLOCO = 48; 
 let obstaculos = [], saidas = [], faseAtual = 0, larguraMundo = 0, alturaMundo = 0, camera = { x: 0, y: 0 };
 
