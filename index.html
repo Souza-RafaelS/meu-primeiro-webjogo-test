@@ -2,15 +2,28 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>RPG - Câmera Segue o Herói</title>
+    <title>Meu Primeiro Jogo Test</title>
     <style>
         body { margin: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        canvas { background: #2e8b57; border: 6px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); image-rendering: pixelated;  }
+        canvas { background: #2e8b57; border: 6px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); image-rendering: pixelated; max-width: 90vw; max-height:50vh;  }
+		.controles-touch { display: none; position: relative; margin-top: 20px; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 10px }
+        .btn-touch { background: rgba(255, 255, 255, 0.2); border: 2px solid #fff; border-radius: 15px; color: white; font-size: 26px; display: flex; justify-content: center; align-items: center; user-select: none; touch-action: none; }
+        /* Quando o jogador encosta o dedo, o botão acende */
+        .btn-touch:active {background: rgba(255, 255, 255, 0.5);}
+        /* Ativa o D-Pad apenas em telas menores (Celulares e Tablets) */
+        @media (max-width: 768px) {.controles-touch { display: grid; }}
     </style>
 </head>
 <body>
     <canvas id="rpg" width="480" height="480"></canvas>
-    
+  
+	// Estrutura dos botões direcionais em formato de cruz//
+	<div class="controles-touch">
+        <div></div> <div class="btn-touch" id="btn-cima">▲</div> <div></div>
+        <div class="btn-touch" id="btn-esquerda">◀</div> <div></div> <div class="btn-touch" id="btn-direita">▶</div>
+        <div></div> <div class="btn-touch" id="btn-baixo">▼</div> <div></div>
+    </div>
+	
     <script src="mapa.js"></script>
 
     <script>
@@ -19,7 +32,7 @@
 
         // --- CONFIGURAÇÃO DA IMAGEM ---
         const imgHeroi = new Image();
-        imgHeroi.src = "heroi2.png"; 
+        imgHeroi.src = "heroi.png"; 
 
         let larguraSprite = 0; 
         let alturaSprite = 0;  
@@ -50,11 +63,11 @@
 		let saidas = []; 
 		let faseAtual = 0;
 
-        // 🎥 NOVAS PROPRIEDADES: Tamanho total do mundo baseado no mapa (20 blocos * 48px = 960px)
+        // Tamanho total do mundo baseado no mapa (20 blocos * 48px = 960px)
         let larguraMundo = 0;
         let alturaMundo = 0;
 
-        // 🎥 NOVAS PROPRIEDADES: Posição X e Y da câmera na tela
+        // Posição X e Y da câmera na tela
         let camera = { x: 0, y: 0 };
 
         function construirMapaDesdeTexto(numeroDaFase) {
@@ -69,7 +82,7 @@
 
             let lines = fasesDoJogo[numeroDaFase].trim().split("\n");
             
-            // 🎥 Calcula o tamanho total do mundo real em pixels
+            // Calcula o tamanho total do mundo real em pixels
             alturaMundo = lines.length * TAMANHO_BLOCO;
             larguraMundo = lines[0].trim().length * TAMANHO_BLOCO;
 
@@ -113,6 +126,29 @@
         window.addEventListener("keydown", (e) => teclas[e.key] = true);
         window.addEventListener("keyup", (e) => teclas[e.key] = false);
 
+        // 📱 JAVASCRIPT NOVO: Configura os botões de toque para agirem exatamente como o teclado
+        function configurarBotaoTouch(idBotao, chaveTeclada) {
+            const botao = document.getElementById(idBotao);
+            
+            // Quando põe o dedo no botão virtual, ativa o comando
+            botao.addEventListener("touchstart", (e) => {
+                e.preventDefault(); 
+                teclas[chaveTeclada] = true;
+            });
+            
+            // Quando tira o dedo do botão virtual, desativa o comando
+            botao.addEventListener("touchend", (e) => {
+                e.preventDefault();
+                teclas[chaveTeclada] = false;
+            });
+        }
+
+        // Conecta cada botão visual com a sua respectiva "ArrowKey" da lógica interna
+        configurarBotaoTouch("btn-cima", "ArrowUp");
+        configurarBotaoTouch("btn-baixo", "ArrowDown");
+        configurarBotaoTouch("btn-esquerda", "ArrowLeft");
+        configurarBotaoTouch("btn-direita", "ArrowRight");
+		
         function atualizar() {
             heroi.andando = false;
 			let velocidadeAtual = teclas["Shift"] ? 5 : 3; 
@@ -121,7 +157,7 @@
             let proximoX = heroi.x;
             let proximoY = heroi.y;
 
-            // 🎥 Agora bloqueamos o herói usando os limites reais do MUNDO (larguraMundo/alturaMundo), não do Canvas
+            // Agora bloqueamos o herói usando os limites reais do MUNDO (larguraMundo/alturaMundo), não do Canvas
             if (teclas["ArrowDown"] && heroi.y < alturaMundo - heroi.alturaTela) {
                 proximoY += velocidadeAtual;
                 heroi.frameY = 0; 
@@ -157,11 +193,11 @@
             if (!colidiuX) heroi.x = proximoX;
             if (!colidiuY) heroi.y = proximoY;
 
-            // 🎥 LÓGICA DA CÂMERA: Centraliza o foco no meio do herói
+            // Centraliza o foco no meio do herói
             camera.x = heroi.x + heroi.larguraTela / 2 - canvas.width / 2;
             camera.y = heroi.y + heroi.alturaTela / 2 - canvas.height / 2;
 
-            // 🎥 LIMITADORES DA CÂMERA: Impede que a câmera filme o "vazio" fora das bordas do mapa grande
+            // Impede que a câmera filme o "vazio" fora das bordas do mapa grande
             if (camera.x < 0) camera.x = 0;
             if (camera.y < 0) camera.y = 0;
             if (camera.x > larguraMundo - canvas.width) camera.x = larguraMundo - canvas.width;
@@ -193,7 +229,7 @@
             // Limpa a tela inteira antes de aplicar o deslocamento
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 🎥 MÁGICA DA CÂMERA: Salva o estado atual e translada o ponto zero do desenho
+            // Salva o estado atual e translada o ponto zero do desenho
             ctx.save();
             ctx.translate(-camera.x, -camera.y);
 
@@ -236,7 +272,7 @@
                 ctx.fillRect(heroi.x, heroi.y, heroi.larguraTela, heroi.alturaTela);
             }
 
-            // 🎥 MÁGICA DA CÂMERA: Restaura o ponto zero para o frame seguinte
+            // Restaura o ponto zero para o frame seguinte
             ctx.restore();
         }
 
