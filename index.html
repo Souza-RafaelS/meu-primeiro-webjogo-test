@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>RPG - Câmera Segue o Herói</title>
+    <style>
+        body { margin: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        canvas { background: #2e8b57; border: 6px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); image-rendering: pixelated;  }
+    </style>
+</head>
+<body>
+    <canvas id="rpg" width="480" height="480"></canvas>
+    
+    <script src="mapa.js"></script>
+
+    <script>
+        const canvas = document.getElementById("rpg");
+        const ctx = canvas.getContext("2d");
+
+        // --- CONFIGURAÇÃO DA IMAGEM ---
+        const imgHeroi = new Image();
+        imgHeroi.src = "heroi2.png"; 
+
+        let larguraSprite = 0; 
+        let alturaSprite = 0;  
+        let imagemPronta = false;
+
+        imgHeroi.onload = function() {
+            larguraSprite = imgHeroi.width / 4;
+            alturaSprite = imgHeroi.height / 4;
+            imagemPronta = true;
+        };
+
+        // --- PROPRIEDADES DO PERSONAGEM ---
+        let heroi = {
+            x: 0,   
+            y: 0,   
+            larguraTela: 40,  
+            alturaTela: 40,   
+            velocidade: 3,
+            frameX: 0,          
+            frameY: 0,          
+            contadorFrames: 0,  
+            andando: false      
+        };
+		
+		// --- CONFIGURAÇÃO DO MAPA ---
+        const TAMANHO_BLOCO = 48; 
+		let obstaculos = [];
+		let saidas = []; 
+		let faseAtual = 0;
+
+        // 🎥 NOVAS PROPRIEDADES: Tamanho total do mundo baseado no mapa (20 blocos * 48px = 960px)
+        let larguraMundo = 0;
+        let alturaMundo = 0;
+
+        // 🎥 NOVAS PROPRIEDADES: Posição X e Y da câmera na tela
+        let camera = { x: 0, y: 0 };
+
+        function construirMapaDesdeTexto(numeroDaFase) {
+            if (numeroDaFase >= fasesDoJogo.length) {
+                alert("Parabéns! Você venceu todas as fases!");
+                faseAtual = 0; 
+                numeroDaFase = 0;
+            }
+
+            obstaculos = [];
+            saidas = [];
+
+            let lines = fasesDoJogo[numeroDaFase].trim().split("\n");
+            
+            // 🎥 Calcula o tamanho total do mundo real em pixels
+            alturaMundo = lines.length * TAMANHO_BLOCO;
+            larguraMundo = lines[0].trim().length * TAMANHO_BLOCO;
+
+            for (let l = 0; l < lines.length; l++) {
+                let linhaTexto = lines[l].trim();
+                for (let c = 0; c < linhaTexto.length; c++) {
+                    if (linhaTexto[c] === '1') {
+                        obstaculos.push({
+                            x: c * TAMANHO_BLOCO,
+                            y: l * TAMANHO_BLOCO,
+                            largura: TAMANHO_BLOCO,
+                            altura: TAMANHO_BLOCO
+                        });
+                    }
+                    else if (linhaTexto[c] === 'P') {
+                        heroi.x = (c * TAMANHO_BLOCO) + (TAMANHO_BLOCO / 2) - (heroi.larguraTela / 2);
+                        heroi.y = (l * TAMANHO_BLOCO) + (TAMANHO_BLOCO / 2) - (heroi.alturaTela / 2);
+					}
+                    else if (linhaTexto[c] === 'S') {
+                        saidas.push({
+                            x: c * TAMANHO_BLOCO,
+                            y: l * TAMANHO_BLOCO,
+                            largura: TAMANHO_BLOCO,
+                            altura: TAMANHO_BLOCO
+                        });
+					}
+                }
+            }
+        }
+        
+        construirMapaDesdeTexto(faseAtual);
+		
+        function testarColisao(retangulo1, retangulo2) {
+            return retangulo1.x < retangulo2.x + retangulo2.largura &&
+                   retangulo1.x + retangulo1.larguraTela > retangulo2.x &&
+                   retangulo1.y < retangulo2.y + retangulo2.altura &&
+                   retangulo1.y + retangulo1.alturaTela > retangulo2.y;
+        }
+
+        let teclas = {};
+        window.addEventListener("keydown", (e) => teclas[e.key] = true);
+        window.addEventListener("keyup", (e) => teclas[e.key] = false);
+
+        function atualizar() {
+            heroi.andando = false;
+			let velocidadeAtual = teclas["Shift"] ? 5 : 3; 
+			let velocidadeAnimacao = teclas["Shift"] ? 5 : 10;
+
+            let proximoX = heroi.x;
+            let proximoY = heroi.y;
+
+            // 🎥 Agora bloqueamos o herói usando os limites reais do MUNDO (larguraMundo/alturaMundo), não do Canvas
+            if (teclas["ArrowDown"] && heroi.y < alturaMundo - heroi.alturaTela) {
+                proximoY += velocidadeAtual;
+                heroi.frameY = 0; 
+                heroi.andando = true;
+            }
+            else if (teclas["ArrowLeft"] && heroi.x > 0) {
+                proximoX -= velocidadeAtual;
+                heroi.frameY = 1; 
+                heroi.andando = true;
+            }
+            else if (teclas["ArrowRight"] && heroi.x < larguraMundo - heroi.larguraTela) {
+                proximoX += velocidadeAtual;
+                heroi.frameY = 3; 
+                heroi.andando = true;
+            }
+            else if (teclas["ArrowUp"] && heroi.y > 0) {
+                proximoY -= velocidadeAtual;
+                heroi.frameY = 2; 
+                heroi.andando = true;
+            }
+
+            let heroiSimuladoX = { ...heroi, x: proximoX };
+            let heroiSimuladoY = { ...heroi, y: proximoY };
+
+            let colidiuX = false;
+            let colidiuY = false;
+
+            for (let obs of obstaculos) {
+                if (testarColisao(heroiSimuladoX, obs)) colidiuX = true;
+                if (testarColisao(heroiSimuladoY, obs)) colidiuY = true;
+            }
+
+            if (!colidiuX) heroi.x = proximoX;
+            if (!colidiuY) heroi.y = proximoY;
+
+            // 🎥 LÓGICA DA CÂMERA: Centraliza o foco no meio do herói
+            camera.x = heroi.x + heroi.larguraTela / 2 - canvas.width / 2;
+            camera.y = heroi.y + heroi.alturaTela / 2 - canvas.height / 2;
+
+            // 🎥 LIMITADORES DA CÂMERA: Impede que a câmera filme o "vazio" fora das bordas do mapa grande
+            if (camera.x < 0) camera.x = 0;
+            if (camera.y < 0) camera.y = 0;
+            if (camera.x > larguraMundo - canvas.width) camera.x = larguraMundo - canvas.width;
+            if (camera.y > alturaMundo - canvas.height) camera.y = alturaMundo - canvas.height;
+
+            for (let saida of saidas) {
+                if (testarColisao(heroi, { ...saida, larguraTela: saida.largura, alturaTela: saida.altura })) {
+                    faseAtual++; 
+                    construirMapaDesdeTexto(faseAtual); 
+                    return; 
+                }
+            }
+
+            if (heroi.andando && (!colidiuX || !colidiuY)) {
+                heroi.contadorFrames++;
+                if (heroi.contadorFrames >= velocidadeAnimacao) { 
+                    heroi.contadorFrames = 0;
+                    heroi.frameX++;
+                    if (heroi.frameX >= 4) heroi.frameX = 0;
+                }
+            } else {
+                heroi.frameX = 0; 
+            }
+        }
+
+        function desenhar() {
+			ctx.imageSmoothingEnabled = false;
+            
+            // Limpa a tela inteira antes de aplicar o deslocamento
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 🎥 MÁGICA DA CÂMERA: Salva o estado atual e translada o ponto zero do desenho
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+
+            // Desenha o chão verde gigante cobrindo todo o tamanho do mundo calculado
+            ctx.fillStyle = "#2e8b57"; 
+            ctx.fillRect(0, 0, larguraMundo, alturaMundo);
+			
+            // Desenha as paredes (nas coordenadas reais do mundo)
+            ctx.fillStyle = "#8b4513"; 
+            for (let obs of obstaculos) {
+                ctx.fillRect(obs.x, obs.y, obs.largura, obs.altura);
+                ctx.strokeStyle = "#4a2306";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(obs.x, obs.y, obs.largura, obs.altura);
+            }
+
+            // Desenha as saídas
+            ctx.fillStyle = "#a52a2a"; 
+            for (let saida of saidas) {
+                ctx.fillRect(saida.x, saida.y, saida.largura, saida.altura);
+                ctx.fillStyle = "#111";
+                ctx.fillRect(saida.x + 8, saida.y + 8, saida.largura - 16, saida.altura - 8);
+            }
+
+            // Desenha o Herói
+            if (imagemPronta) {
+                ctx.drawImage(
+                    imgHeroi,
+                    heroi.frameX * larguraSprite,  
+                    heroi.frameY * alturaSprite,   
+                    larguraSprite, 
+                    alturaSprite,
+                    heroi.x, 
+                    heroi.y,
+                    heroi.larguraTela, 
+                    heroi.alturaTela
+                );
+            } else {
+                ctx.fillStyle = "#3498db";
+                ctx.fillRect(heroi.x, heroi.y, heroi.larguraTela, heroi.alturaTela);
+            }
+
+            // 🎥 MÁGICA DA CÂMERA: Restaura o ponto zero para o frame seguinte
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            atualizar();
+            desenhar();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
