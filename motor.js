@@ -9,11 +9,16 @@ let larguraSprite = 0, alturaSprite = 0, imagemPronta = false;
 imgHeroi.onload = function() {
     larguraSprite = imgHeroi.width / 4;
     alturaSprite = imgHeroi.height / 4;
+    const ESCALA = 1.5;
+
+    heroi.larguraDesenho = larguraSprite * ESCALA;
+    heroi.alturaDesenho = alturaSprite * ESCALA;
+    
     imagemPronta = true;
 };
 
 // --- PROPRIEDADES DO JOGO ---
-let heroi = { x: 0, y: 0, larguraTela: 32, alturaTela: 20, larguraDesenho: 16, alturaDesenho: 20, velocidade: 3, frameX: 0, frameY: 0, contadorFrames: 0, andando: false };
+let heroi = { x: 0, y: 0, larguraTela: 32, alturaTela: 20, larguraDesenho: 0, alturaDesenho: 0, velocidade: 3, frameX: 0, frameY: 0, contadorFrames: 0, andando: false };
 const TAMANHO_BLOCO = 48; 
 let obstaculos = [], saidas = [], faseAtual = 0, larguraMundo = 0, alturaMundo = 0, camera = { x: 0, y: 0 };
 
