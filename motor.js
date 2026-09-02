@@ -3,7 +3,7 @@ const ctx = canvas.getContext("2d");
 
 // --- CONFIGURAÇÃO DA IMAGEM ---
 const imgHeroi = new Image();
-imgHeroi.src = "heroi0A_teste.png"; 
+imgHeroi.src = "heroi0A.png"; 
 
 let larguraSprite = 0, alturaSprite = 0, imagemPronta = false;
 imgHeroi.onload = function() {
