@@ -3,7 +3,7 @@ const ctx = canvas.getContext("2d");
 
 // --- CONFIGURAÇÃO DA IMAGEM ---
 const imgHeroi = new Image();
-imgHeroi.src = "heroi0A.png"; 
+imgHeroi.src = "heroi0A_teste.png"; 
 
 let larguraSprite = 0, alturaSprite = 0, imagemPronta = false;
 imgHeroi.onload = function() {
@@ -13,7 +13,7 @@ imgHeroi.onload = function() {
 };
 
 // --- PROPRIEDADES DO JOGO ---
-let heroi = { x: 0, y: 0, larguraTela: 36, alturaTela: 36, velocidade: 3, frameX: 0, frameY: 0, contadorFrames: 0, andando: false };
+let heroi = { x: 0, y: 0, larguraTela: 32, alturaTela: 20, larguraDesenho: 48, alturaDesenho: 64, velocidade: 3, frameX: 0, frameY: 0, contadorFrames: 0, andando: false };
 const TAMANHO_BLOCO = 48; 
 let obstaculos = [], saidas = [], faseAtual = 0, larguraMundo = 0, alturaMundo = 0, camera = { x: 0, y: 0 };
 
@@ -97,9 +97,12 @@ function desenhar() {
     for (let s of saidas) ctx.fillRect(s.x, s.y, s.largura, s.altura);
 
     if (imagemPronta) {
-        ctx.drawImage(imgHeroi, heroi.frameX * larguraSprite, heroi.frameY * alturaSprite, larguraSprite, alturaSprite, heroi.x, heroi.y, heroi.larguraTela, heroi.alturaTela);
+        let ajusteX = heroi.x - (heroi.larguraDesenho - heroi.larguraTela) / 2;
+        let ajusteY = heroi.y - (heroi.alturaDesenho - heroi.alturaTela);
+        ctx.drawImage(imgHeroi, heroi.frameX * larguraSprite, heroi.frameY * alturaSprite, larguraSprite, alturaSprite, ajusteX, ajusteY, heroi.larguraTela, heroi.alturaTela);
     } else {
-        ctx.fillStyle = "#3498db"; ctx.fillRect(heroi.x, heroi.y, heroi.larguraTela, heroi.alturaTela);
+        ctx.fillStyle = "#3498db";
+        ctx.fillRect(heroi.x, heroi.y, heroi.larguraTela, heroi.alturaTela);
     }
     ctx.restore();
 }
