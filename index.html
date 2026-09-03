@@ -11,28 +11,47 @@
         
         .controles-touch {
             display: none;
-            margin-top: 20px;
-            grid-template-columns: repeat(3, 65px);
-            grid-template-rows: repeat(3, 65px);
-            gap: 10px;
+            margin-top: 15px;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 8px;
+            touch-action: none;
         }
         
         .btn-touch {
+            width: 60px;
+            height: 60px;
+
+            padding: 0;
+
             background: rgba(255, 255, 255, 0.15);
+
             border: 2px solid rgba(255, 255, 255, 0.6);
             border-radius: 50%;
+
             color: white;
-            font-size: 24px;
+
+            font-size: 23px;
+
             display: flex;
             justify-content: center;
             align-items: center;
+
             user-select: none;
+            -webkit-user-select: none;
+
             touch-action: none;
             -webkit-tap-highlight-color: transparent;
+
+            cursor: pointer;
         }
         
-        .btn-touch:active { background: rgba(255, 255, 255, 0.4); border-color: #fff; }
+        .btn-touch:active { background: rgba(255, 255, 255, 0.4); border-color: #fff; transform: scale(0.94); }
 
+        .btn-acao {
+            background: rgba(241, 196, 15, 0.25);
+            border-color: #f1c40f;
+        }
         @media (max-width: 768px) {
             .controles-touch { display: grid; }
         }
@@ -44,12 +63,22 @@
 
     <div class="controles-touch">
         <div></div> <div class="btn-touch" id="btn-cima">▲</div> <div></div>
-        <div class="btn-touch" id="btn-esquerda">◀</div> <div></div> <div class="btn-touch" id="btn-direita">▶</div>
+        <div class="btn-touch" id="btn-esquerda">◀</div> <button class="btn-touch btn-acao" id="btn-confirmar">●</button> <div class="btn-touch" id="btn-direita">▶</div>
         <div></div> <div class="btn-touch" id="btn-baixo">▼</div> <div></div>
     </div>
 
     <script src="mapa.js"></script>
     <script src="teclado.js"></script>
+    <script src="configuracao.js"></script>
+    <script src="configuracaoMenu.js"></script>
+    <script src="jogador.js"></script>
+    <script src="colisao.js"></script>
+    <script src="camera.js"></script>
+    <script src="mapaMotor.js"></script>
+    <script src="desenho.js"></script>
+    <script src="save.js"></script>
+    <script src="menu.js"></script>
+    <script src="fases.js"></script>
     <script src="motor.js"></script>
 
     <script>
