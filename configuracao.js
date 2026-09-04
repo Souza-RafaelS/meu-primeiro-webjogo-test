@@ -20,6 +20,7 @@ const CONFIG_JOGADOR = {
         esquerda: "ArrowLeft",
         direita: "ArrowRight",
         correr: "Shift",
+        atacar:"Space",
         confirmar: " ",
         interagir: "e",
         inventario: "i",

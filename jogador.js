@@ -32,48 +32,135 @@ let heroi = {
     ouro: 0
 };
 function atualizarJogador() {
+
     heroi.andando = false;
 
-    let velocidadeAtual = comandoPressionado("correr")
-        ? CONFIG.velocidadeCorrida
-        : CONFIG.velocidadeNormal;
-    
-    let velocidadeAnimacao = comandoPressionado("correr")
-        ? CONFIG.framesAnimacaoCorrendo
-        : CONFIG.framesAnimacaoNormal;
+    // =====================================================
+    // VELOCIDADE
+    // =====================================================
 
-        //console.log("ANIMAÇÃO:", velocidadeAnimacao);
+    const correndo =
+        comandoPressionado("correr");
 
-    
-    let proximoX = heroi.x;
-    let proximoY = heroi.y;
+    const velocidadeAtual =
+        correndo
+            ? CONFIG.velocidadeCorrida
+            : CONFIG.velocidadeNormal;
 
-    if(comandoPressionado("baixo") && heroi.y < alturaMundo - heroi.alturaTela) {
-        proximoY += velocidadeAtual;
-        heroi.frameY = 0;
-        heroi.andando = true;
-    }
-    else if (comandoPressionado("esquerda") && heroi.x > 0) {
-        proximoX -= velocidadeAtual;
-        heroi.frameY = 1;
-        heroi.andando = true;
-    }
-    else if (comandoPressionado("direita") && heroi.x < larguraMundo - heroi.larguraTela) {
-        proximoX += velocidadeAtual;
-        heroi.frameY = 3;
-        heroi.andando = true;
-    }
-    else if (comandoPressionado("cima") && heroi.y > 0) {
-        proximoY -= velocidadeAtual;
-        heroi.frameY = 2;
-        heroi.andando = true;
+    const velocidadeAnimacao =
+        correndo
+            ? CONFIG.framesAnimacaoCorrendo
+            : CONFIG.framesAnimacaoNormal;
+
+
+    // =====================================================
+    // DIREÇÃO DO MOVIMENTO
+    // =====================================================
+
+    let direcaoX = 0;
+    let direcaoY = 0;
+
+
+    if (comandoPressionado("esquerda")) {
+        direcaoX -= 1;
     }
 
-    atualizarAnimacaoJogador(velocidadeAnimacao);
+    if (comandoPressionado("direita")) {
+        direcaoX += 1;
+    }
+
+    if (comandoPressionado("cima")) {
+        direcaoY -= 1;
+    }
+
+    if (comandoPressionado("baixo")) {
+        direcaoY += 1;
+    }
+
+
+    // =====================================================
+    // MOVIMENTO
+    // =====================================================
+
+    if (direcaoX !== 0 || direcaoY !== 0) {
+
+        heroi.andando = true;
+
+
+        // Normalização da diagonal
+        // Evita que diagonal seja mais rápida.
+
+        const comprimento =
+            Math.sqrt(
+                direcaoX * direcaoX +
+                direcaoY * direcaoY
+            );
+
+
+        direcaoX /= comprimento;
+        direcaoY /= comprimento;
+
+
+        const proximoX =
+            heroi.x +
+            direcaoX * velocidadeAtual;
+
+        const proximoY =
+            heroi.y +
+            direcaoY * velocidadeAtual;
+
+
+        // =================================================
+        // DIREÇÃO DA ANIMAÇÃO
+        // =================================================
+
+        if (direcaoY > 0) {
+
+            // Baixo
+            heroi.frameY = 0;
+
+        } else if (direcaoY < 0) {
+
+            // Cima
+            heroi.frameY = 2;
+
+        } else if (direcaoX < 0) {
+
+            // Esquerda
+            heroi.frameY = 1;
+
+        } else if (direcaoX > 0) {
+
+            // Direita
+            heroi.frameY = 3;
+        }
+
+
+        atualizarAnimacaoJogador(
+            velocidadeAnimacao
+        );
+
+
+        return {
+            proximoX,
+            proximoY
+        };
+    }
+
+
+    // =====================================================
+    // PARADO
+    // =====================================================
+
+    atualizarAnimacaoJogador(
+        velocidadeAnimacao
+    );
+
 
     return {
-        proximoX,
-        proximoY,
+
+        proximoX: heroi.x,
+        proximoY: heroi.y
     };
 }
 function atualizarAnimacaoJogador(velocidadeAnimacao) {

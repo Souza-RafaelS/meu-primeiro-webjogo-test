@@ -12,6 +12,7 @@ window.addEventListener("keydown", (e) => {
 
     teclas[e.key] = true;
 
+    // 🔵 X / Espaço = confirmar nos menus
     if (e.key === CONFIG_JOGADOR.controles.confirmar) {
         confirmarPressionado = true;
     }
@@ -41,7 +42,7 @@ function comandoPressionado(comando) {
 
 
 // =====================================================
-// VERIFICAR SE A TECLA FOI PRESSIONADA AGORA
+// VERIFICAR SE FOI PRESSIONADO AGORA
 // =====================================================
 
 function teclaFoiPressionada(comando) {
@@ -53,16 +54,14 @@ function teclaFoiPressionada(comando) {
 
 
 // =====================================================
-// MOUSE E TOUCH DO CANVAS
+// MOUSE
 // =====================================================
 
 window.addEventListener("mousedown", (e) => {
+
     capturarClique(e);
+
 });
-
-
-// Não usamos touchstart global para os botões.
-// Os botões touch possuem seu próprio sistema.
 
 
 function capturarClique(evento) {
@@ -77,20 +76,22 @@ function capturarClique(evento) {
 
     cliqueDoMouse = {
 
-        x: (evento.clientX - rect.left) *
-           (canvas.width / rect.width),
+        x:
+            (evento.clientX - rect.left) *
+            (canvas.width / rect.width),
 
-        y: (evento.clientY - rect.top) *
-           (canvas.height / rect.height)
+        y:
+            (evento.clientY - rect.top) *
+            (canvas.height / rect.height)
     };
 }
 
 
 // =====================================================
-// CONTROLES TOUCH
+// BOTÕES TOUCH
 // =====================================================
 
-function configurarBotaoTouch(id, comando) {
+function configurarBotaoTouch(id, comandoJogo, comandoMenu = null) {
 
     const botao = document.getElementById(id);
 
@@ -99,113 +100,494 @@ function configurarBotaoTouch(id, comando) {
     }
 
 
-    // ---------------------------------------------
+    // -------------------------------------------------
     // PRESSIONAR
-    // ---------------------------------------------
+    // -------------------------------------------------
 
     botao.addEventListener("pointerdown", function(event) {
 
         event.preventDefault();
 
-        const tecla = CONFIG_JOGADOR.controles[comando];
+        let comando;
+
+
+        // =============================================
+        // ESCOLHER O COMANDO PELO ESTADO DO JOGO
+        // =============================================
+
+        if (estadoJogo === "JOGO") {
+
+            comando = comandoJogo;
+
+        } else {
+
+            comando = comandoMenu;
+        }
+
+
+        if (!comando) {
+            return;
+        }
+
+
+        const tecla =
+            CONFIG_JOGADOR.controles[comando];
+
 
         if (!tecla) {
             return;
         }
 
-        teclas[tecla] = true;
 
-        // Mantém o controle mesmo se o dedo sair
-        // ligeiramente do botão.
-        if (botao.setPointerCapture) {
-            botao.setPointerCapture(event.pointerId);
+        // =============================================
+        // CONFIRMAR
+        // =============================================
+
+        if (comando === "confirmar") {
+
+            confirmarPressionado = true;
+
         }
+
+        // =============================================
+        // QUALQUER OUTRO COMANDO
+        // =============================================
+
+        else {
+
+            teclas[tecla] = true;
+        }
+
+
+        // =============================================
+        // CAPTURAR O DEDO
+        // =============================================
+
+        if (botao.setPointerCapture) {
+
+            botao.setPointerCapture(
+                event.pointerId
+            );
+        }
+
     });
 
 
-    // ---------------------------------------------
+    // -------------------------------------------------
     // SOLTAR
-    // ---------------------------------------------
+    // -------------------------------------------------
 
     function soltar(event) {
 
         event.preventDefault();
 
-        const tecla = CONFIG_JOGADOR.controles[comando];
+        let comando;
+
+
+        if (estadoJogo === "JOGO") {
+
+            comando = comandoJogo;
+
+        } else {
+
+            comando = comandoMenu;
+        }
+
+
+        if (!comando) {
+            return;
+        }
+
+
+        const tecla =
+            CONFIG_JOGADOR.controles[comando];
+
 
         if (!tecla) {
             return;
         }
 
-        teclas[tecla] = false;
+
+        if (comando === "confirmar") {
+
+            confirmarPressionado = false;
+
+        }
+
+        else {
+
+            teclas[tecla] = false;
+        }
     }
 
 
-    botao.addEventListener("pointerup", soltar);
+    botao.addEventListener(
+        "pointerup",
+        soltar
+    );
 
-    botao.addEventListener("pointercancel", soltar);
 
-    botao.addEventListener("lostpointercapture", soltar);
+    botao.addEventListener(
+        "pointercancel",
+        soltar
+    );
+
+
+    botao.addEventListener(
+        "lostpointercapture",
+        soltar
+    );
 }
 
 
 // =====================================================
-// DIRECIONAIS
+// MAPEAMENTO DOS BOTÕES
 // =====================================================
 
-configurarBotaoTouch("btn-cima", "cima");
-configurarBotaoTouch("btn-baixo", "baixo");
-configurarBotaoTouch("btn-esquerda", "esquerda");
-configurarBotaoTouch("btn-direita", "direita");
+
+// 🔵 X
+// JOGO      → correr
+// MENUS     → confirmar
+
+configurarBotaoTouch(
+    "btn-xis",
+    "correr",
+    "confirmar"
+);
+
+
+// 🔴 QUADRADO
+// JOGO      → atacar
+
+configurarBotaoTouch(
+    "btn-quadrado",
+    "atacar"
+);
+
+
+// 🟡 TRIÂNGULO
+// JOGO      → interagir
+
+configurarBotaoTouch(
+    "btn-triangulo",
+    "interagir"
+);
+
+
+// 🟢 BOLA
+// JOGO      → inventário
+// MENUS     → voltar
+
+configurarBotaoTouch(
+    "btn-bola",
+    "inventario",
+    "voltar"
+);
 
 
 // =====================================================
-// BOTÃO CONFIRMAR
+// JOYSTICK
 // =====================================================
 
-const btnConfirmar =
-    document.getElementById("btn-confirmar");
+const joystickBase =
+    document.getElementById("joystick-base");
+
+const joystickPino =
+    document.getElementById("joystick-pino");
 
 
-if (btnConfirmar) {
+let joystickAtivo = false;
+let joystickPointerId = null;
+let direcaoJoystick = null;
 
-    btnConfirmar.addEventListener(
+
+const raioJoystick = 45;
+
+
+const DIRECOES = {
+
+    cima: "ArrowUp",
+    baixo: "ArrowDown",
+    esquerda: "ArrowLeft",
+    direita: "ArrowRight"
+};
+
+
+// =====================================================
+// INICIAR JOYSTICK
+// =====================================================
+
+if (joystickBase) {
+
+    joystickBase.addEventListener(
         "pointerdown",
         function(event) {
 
             event.preventDefault();
 
-            confirmarPressionado = true;
+            if (joystickAtivo) {
+                return;
+            }
 
-            if (btnConfirmar.setPointerCapture) {
-                btnConfirmar.setPointerCapture(
+
+            joystickAtivo = true;
+
+            joystickPointerId =
+                event.pointerId;
+
+
+            if (joystickBase.setPointerCapture) {
+
+                joystickBase.setPointerCapture(
                     event.pointerId
                 );
             }
+
+
+            atualizarJoystick(
+                event.clientX,
+                event.clientY
+            );
         }
     );
 
 
-    function soltarConfirmar(event) {
+    // =================================================
+    // MOVIMENTO
+    // =================================================
 
-        event.preventDefault();
+    joystickBase.addEventListener(
+        "pointermove",
+        function(event) {
 
-        confirmarPressionado = false;
+            if (!joystickAtivo) {
+                return;
+            }
+
+
+            if (
+                event.pointerId !==
+                joystickPointerId
+            ) {
+                return;
+            }
+
+
+            event.preventDefault();
+
+
+            atualizarJoystick(
+                event.clientX,
+                event.clientY
+            );
+        }
+    );
+
+
+    // =================================================
+    // PARAR
+    // =================================================
+
+    function pararJoystick(event) {
+
+        if (
+            event &&
+            event.pointerId !==
+            joystickPointerId
+        ) {
+            return;
+        }
+
+
+        if (direcaoJoystick) {
+
+            teclas[
+                DIRECOES[direcaoJoystick]
+            ] = false;
+        }
+
+
+        direcaoJoystick = null;
+
+        joystickAtivo = false;
+
+        joystickPointerId = null;
+
+
+        if (joystickPino) {
+
+            joystickPino.style.transform =
+                "translate(0px, 0px)";
+        }
     }
 
 
-    btnConfirmar.addEventListener(
+    joystickBase.addEventListener(
         "pointerup",
-        soltarConfirmar
+        pararJoystick
     );
 
-    btnConfirmar.addEventListener(
+
+    joystickBase.addEventListener(
         "pointercancel",
-        soltarConfirmar
+        pararJoystick
     );
 
-    btnConfirmar.addEventListener(
+
+    joystickBase.addEventListener(
         "lostpointercapture",
-        soltarConfirmar
+        pararJoystick
     );
 }
+
+
+// =====================================================
+// ATUALIZAR JOYSTICK
+// =====================================================
+
+function atualizarJoystick(x, y) {
+
+    if (!joystickBase) {
+        return;
+    }
+
+
+    const rect =
+        joystickBase.getBoundingClientRect();
+
+
+    const centroX =
+        rect.left +
+        rect.width / 2;
+
+
+    const centroY =
+        rect.top +
+        rect.height / 2;
+
+
+    let dx = x - centroX;
+    let dy = y - centroY;
+
+
+    const distancia =
+        Math.sqrt(
+            dx * dx +
+            dy * dy
+        );
+
+
+    // =============================================
+    // LIMITAR O PINO
+    // =============================================
+
+    if (distancia > raioJoystick) {
+
+        dx =
+            (dx / distancia) *
+            raioJoystick;
+
+        dy =
+            (dy / distancia) *
+            raioJoystick;
+    }
+
+
+    if (joystickPino) {
+
+        joystickPino.style.transform =
+            `translate(${dx}px, ${dy}px)`;
+    }
+
+
+    // =============================================
+    // DETERMINAR DIREÇÃO
+    // =============================================
+
+    let novaDirecao = null;
+
+
+    // Zona morta
+    if (distancia > 15) {
+
+        if (
+            Math.abs(dx) >
+            Math.abs(dy)
+        ) {
+
+            novaDirecao =
+                dx > 0
+                    ? "direita"
+                    : "esquerda";
+
+        } else {
+
+            novaDirecao =
+                dy > 0
+                    ? "baixo"
+                    : "cima";
+        }
+    }
+
+
+    // =============================================
+    // MUDOU DE DIREÇÃO
+    // =============================================
+
+    if (
+        novaDirecao !==
+        direcaoJoystick
+    ) {
+
+
+        // Liberar direção anterior
+
+        if (direcaoJoystick) {
+
+            teclas[
+                DIRECOES[direcaoJoystick]
+            ] = false;
+        }
+
+
+        direcaoJoystick =
+            novaDirecao;
+
+
+        // Ativar nova direção
+
+        if (direcaoJoystick) {
+
+            teclas[
+                DIRECOES[direcaoJoystick]
+            ] = true;
+        }
+    }
+}
+
+
+// =====================================================
+// SEGURANÇA
+// =====================================================
+
+window.addEventListener("blur", function() {
+
+    teclas = {};
+
+    confirmarPressionado = false;
+
+    teclasAnterior = {};
+
+    joystickAtivo = false;
+
+    joystickPointerId = null;
+
+    direcaoJoystick = null;
+
+
+    if (joystickPino) {
+
+        joystickPino.style.transform =
+            "translate(0px, 0px)";
+    }
+});

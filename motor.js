@@ -45,22 +45,61 @@ function atualizar() {
         return;
     }
 
-    const movimento = atualizarJogador();
+// =====================================================
+// ATUALIZAR JOGADOR
+// =====================================================
 
-    let proximoX = movimento.proximoX;
-    let proximoY = movimento.proximoY;
+const movimento = atualizarJogador();
 
-    const colisao = verificarColisaoMovimento(proximoX, proximoY);
 
-    let bloqueadoX = colisao.bloqueadoX;
-    let bloqueadoY = colisao.bloqueadoY;
+// =====================================================
+// MOVIMENTO X
+// =====================================================
 
-    if (!bloqueadoX) heroi.x = proximoX;
-    if (!bloqueadoY) heroi.y = proximoY;
+const colisaoX =
+    verificarColisaoMovimento(
+        movimento.proximoX,
+        heroi.y
+    );
 
-    atualizarCamera();
 
-    verificarSaida();
+if (!colisaoX.bloqueadoX) {
+
+    heroi.x =
+        movimento.proximoX;
+}
+
+
+// =====================================================
+// MOVIMENTO Y
+// =====================================================
+
+const colisaoY =
+    verificarColisaoMovimento(
+        heroi.x,
+        movimento.proximoY
+    );
+
+
+if (!colisaoY.bloqueadoY) {
+
+    heroi.y =
+        movimento.proximoY;
+}
+
+
+// =====================================================
+// CÂMERA
+// =====================================================
+
+atualizarCamera();
+
+
+// =====================================================
+// SAÍDA DA FASE
+// =====================================================
+
+verificarSaida();
 
 //  console.log("andando:", heroi.andando,"contador:", heroi.contadorFrames,"frameX:", heroi.frameX,"velocidadeAnimacao:", movimento.velocidadeAnimacao);
 

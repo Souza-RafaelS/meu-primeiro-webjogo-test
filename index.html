@@ -2,58 +2,158 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no, viewport-fit=cover">
     <link rel="manifest" href="manifest.json">
     <title>Meu RPG Nativo</title>
     <style>
         body { margin: 0; background: #111; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; overflow: hidden; overscroll-behavior-y: contain; }
-        canvas { background: #2e8b57; border: 4px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); image-rendering: pixelated; max-width: 95vw; max-height: 55vh; }
         
+        /* 🔳 CANVAS RESPONSIVO SEM BORDAS LATERAIS (Quadrado Dinâmico 1:1) */
+        canvas { 
+            background: #2e8b57; 
+            border: none;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+            image-rendering: pixelated; 
+            width: 100vw;
+            height: 100vw;
+            max-width: 100vh;
+            max-height: 100vh;
+            box-sizing: border-box;
+            z-index: 1;
+        }
+        
+        /* Oculta os controles por padrão no computador */
         .controles-touch {
             display: none;
-            margin-top: 15px;
-            grid-template-columns: repeat(3, 60px);
-            grid-template-rows: repeat(3, 60px);
-            gap: 8px;
-            touch-action: none;
         }
-        
-        .btn-touch {
-            width: 60px;
-            height: 60px;
 
-            padding: 0;
+        /* 📱 COMPORTAMENTO DISPOSITIVOS MÓVEIS (TOUCH) */
+        @media (pointer: coarse) {
+            .controles-touch {
+                display: block;
+                position: fixed;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                height: 200px;
+                z-index: 10;
+                user-select: none;
+                -webkit-user-select: none;
+            }
 
-            background: rgba(255, 255, 255, 0.15);
+            /* 🕹️ Base externa redonda do analógico (PS2) */
+            #joystick-base {
+                position: absolute;
+                left: 25px;
+                bottom: 40px;
+                width: 110px;
+                height: 110px;
+                background: rgba(0, 0, 0, 0.4);
+                border: 3px solid rgba(255, 255, 255, 0.4);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                touch-action: none;
+                backdrop-filter: blur(4px);
+            }
 
-            border: 2px solid rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
+            /* O pino interno que o jogador arrasta */
+            #joystick-pino {
+                width: 50px;
+                height: 50px;
+                background: rgba(255, 255, 255, 0.6);
+                border: 2px solid #fff;
+                border-radius: 50%;
+                transition: transform 0.05s linear;
+                touch-action: none;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            }
 
-            color: white;
+            /* 🎮 FORMATO DE QUADRADO PERFEITO (BLOCO 2X2) PARA OS BOTÕES WINDOWS */
+            .botoes-acao {
+                position: absolute;
+                right: 30px;
+                bottom: 40px; /* Alinhado perfeitamente com a altura do analógico */
+                display: grid;
+                grid-template-columns: repeat(2, 54px); /* Apenas 2 colunas */
+                grid-template-rows: repeat(2, 54px);    /* Apenas 2 linhas */
+                gap: 6px;
+            }
 
-            font-size: 23px;
+            /* 🎮 BOTÕES DE AÇÃO */
+			.btn-touch {
+				width: 54px;
+				height: 54px;
+				padding: 0;
+				border: 2px solid transparent;
+				border-radius: 10px;
+				color: white;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				touch-action: none;
+				-webkit-tap-highlight-color: transparent;
+				cursor: pointer;
 
-            display: flex;
-            justify-content: center;
-            align-items: center;
+				/* A cor de cada botão vem daqui */
+				background: var(--cor);
+				border-color: var(--borda);
 
-            user-select: none;
-            -webkit-user-select: none;
+				/* Deixa o clique suave */
+				transition: 0.1s;
+			}
 
-            touch-action: none;
-            -webkit-tap-highlight-color: transparent;
+			/* 🟡🟢🔴🔵 CORES DOS BOTÕES */
+			.btn-touch:nth-child(1) {
+				--cor: rgba(241, 196, 15, 0.25);
+				--borda: rgba(241, 196, 15, 0.7);
+			}
+			.btn-touch:nth-child(2) {
+				--cor: rgba(46, 204, 113, 0.25);
+				--borda: rgba(46, 204, 113, 0.7);
+			}
+			.btn-touch:nth-child(3) {
+				--cor: rgba(231, 76, 60, 0.25);
+				--borda: rgba(231, 76, 60, 0.7);
+			}
 
-            cursor: pointer;
-        }
-        
-        .btn-touch:active { background: rgba(255, 255, 255, 0.4); border-color: #fff; transform: scale(0.94); }
+			.btn-touch:nth-child(4) {
+				--cor: rgba(52, 152, 219, 0.25);
+				--borda: rgba(52, 152, 219, 0.7);
+			}
 
-        .btn-acao {
-            background: rgba(241, 196, 15, 0.25);
-            border-color: #f1c40f;
-        }
-        @media (max-width: 768px) {
-            .controles-touch { display: grid; }
+
+
+
+			/* 👆 Efeito ao apertar */
+			.btn-touch:active {
+				filter: brightness(0.75);
+				transform: scale(0.92);
+			}
+
+
+            /* 🔄 Celular em pé (Portrait) */
+            @media (orientation: portrait) {
+                canvas {
+                    width: 100vw;
+                    height: 100vw;
+                    margin-bottom: 40px;
+                }
+            }
+
+            /* 🔄 Celular deitado (Landscape) */
+            @media (orientation: landscape) {
+                canvas {
+                    width: 100vh;
+                    height: 100vh;
+                }
+                .controles-touch {
+                    height: 160px;
+                }
+                #joystick-base { bottom: 20px; left: 40px; }
+                .botoes-acao { bottom: 20px; right: 40px; }
+            }
         }
     </style>
 </head>
@@ -61,15 +161,30 @@
 
     <canvas id="rpg" width="400" height="400"></canvas>
 
+    <!-- Estrutura sem nenhuma div vazia, criando o bloco quadrado automático -->
     <div class="controles-touch">
-        <div></div> <div class="btn-touch" id="btn-cima">▲</div> <div></div>
-        <div class="btn-touch" id="btn-esquerda">◀</div> <button class="btn-touch btn-acao" id="btn-confirmar">●</button> <div class="btn-touch" id="btn-direita">▶</div>
-        <div></div> <div class="btn-touch" id="btn-baixo">▼</div> <div></div>
+        <!-- Lado Esquerdo -->
+        <div id="joystick-base">
+            <div id="joystick-pino"></div>
+        </div>
+
+        <!-- Lado Direito: Bloco 2x2 limpo -->
+        <div class="botoes-acao">
+            <button class="btn-touch" id="btn-triangulo">
+            </button>
+            <button class="btn-touch" id="btn-bola">
+            </button>
+            <button class="btn-touch" id="btn-quadrado">
+            </button>
+            <button class="btn-touch" id="btn-xis">
+            </button>
+        </div>
     </div>
 
+    <!-- Seus scripts originais -->
     <script src="mapa.js"></script>
-    <script src="teclado.js"></script>
     <script src="configuracao.js"></script>
+    <script src="teclado.js"></script>
     <script src="configuracaoMenu.js"></script>
     <script src="jogador.js"></script>
     <script src="colisao.js"></script>
@@ -81,10 +196,13 @@
     <script src="fases.js"></script>
     <script src="motor.js"></script>
 
+    <!-- Script de Processamento e Eventos de Toque Contínuo -->
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
+
+    // Registro do Service Worker original do seu projeto
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
     </script>
 </body>
 </html>
